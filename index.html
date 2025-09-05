@@ -1,913 +1,911 @@
-﻿<html> 
-<html lang="en"> 
-<head> 
-   <meta charset="UTF-8"> 
-   <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-   <title>UNIT:SERAPHIM</title> 
-   <link href="https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap" rel="stylesheet"> 
-   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet"> 
-   <style> 
-       * { 
-           margin: 0; 
-           padding: 0; 
-           box-sizing: border-box; 
-       } 
-
-       body { 
-           font-family: 'Orbitron', sans-serif; 
-           color: #00FF41; 
-           background-color: #0a0a0a; 
-           overflow-x: hidden; 
-           position: relative; 
-           line-height: 1.6; 
-       } 
-
-       /* CRT эффект */ 
-       body::before { 
-           content: ""; 
-           position: fixed; 
-           top: 0; 
-           left: 0; 
-           width: 100%; 
-           height: 100%; 
-           background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); 
-           z-index: 1000; 
-           background-size: 100% 2px, 3px 100%; 
-           pointer-events: none; 
-           opacity: 0.3; 
-       } 
-
-       /* Сканирующая линия */ 
-       .scan-line { 
-           position: fixed; 
-           top: 0; 
-           left: 0; 
-           width: 100%; 
-           height: 5px; 
-           background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)); 
-           z-index: 1001; 
-           pointer-events: none; 
-           animation: scan 4s linear infinite; 
-       } 
-
-       @keyframes scan { 
-           0% { top: 0; } 
-           100% { top: 100vh; } 
-       } 
-
-       /* Шум */ 
-       .noise { 
-           position: fixed; 
-           top: 0; 
-           left: 0; 
-           width: 100%; 
-           height: 100%; 
-           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); 
-           opacity: 0.05; 
-           z-index: 1002; 
-           pointer-events: none; 
-       } 
-
-       .container { 
-           max-width: 1200px; 
-           margin: 0 auto; 
-           padding: 20px; 
-           position: relative; 
-           z-index: 10; 
-       } 
-
-       /* Загрузочный экран */ 
-       #loader { 
-           position: fixed; 
-           top: 0; 
-           left: 0; 
-           width: 100%; 
-           height: 100%; 
-           background: #000; 
-           display: flex; 
-           flex-direction: column; 
-           justify-content: center; 
-           align-items: center; 
-           z-index: 2000; 
-       } 
-
-       .loader-text { 
-           color: #00FF41; 
-           font-size: 24px; 
-           margin-bottom: 30px; 
-           text-align: center; 
-           font-family: 'Zen Dots', cursive; 
-           text-shadow: 0 0 10px #00FF41; 
-       } 
-
-       .world-map { 
-           width: 80%; 
-           max-width: 600px; 
-           height: 300px; 
-           position: relative; 
-           margin-bottom: 30px; 
-           overflow: hidden; 
-       } 
-
-       .protocol-text { 
-           color: #00FF41; 
-           font-family: 'Orbitron', monospace; 
-           font-size: 14px; 
-           line-height: 1.8; 
-           text-align: center; 
-           margin-bottom: 20px; 
-           text-shadow: 0 0 5px #00FF41; 
-           min-height: 180px; 
-       } 
-
-       .protocol-line { 
-           opacity: 0; 
-           transform: translateY(10px); 
-           animation: fadeInLine 0.5s forwards; 
-       } 
-
-       @keyframes fadeInLine { 
-           to { 
-               opacity: 1; 
-               transform: translateY(0); 
-           } 
-       } 
-
-       .city-point { 
-           position: absolute; 
-           width: 10px; 
-           height: 10px; 
-           background: #ff003c; 
-           border-radius: 50%; 
-           transform: translate(-50%, -50%); 
-           box-shadow: 0 0 10px #ff003c; 
-           opacity: 0; 
-       } 
-
-       .city-point::after { 
-           content: ''; 
-           position: absolute; 
-           top: 50%; 
-           left: 50%; 
-           width: 20px; 
-           height: 20px; 
-           border: 2px solid #ff003c; 
-           border-radius: 50%; 
-           transform: translate(-50%, -50%); 
-           opacity: 0; 
-           animation: pulse 2s infinite; 
-       } 
-
-       @keyframes pulse { 
-           0% { width: 0; height: 0; opacity: 1; } 
-           100% { width: 40px; height: 40px; opacity: 0; } 
-       } 
-
-       .loading-container { 
-           width: 300px; 
-           margin-top: 20px; 
-       } 
-
-       .loading-text { 
-           color: #00FF41; 
-           font-family: 'Orbitron', monospace; 
-           font-size: 14px; 
-           margin-bottom: 5px; 
-           text-align: center; 
-       } 
-
-       .loading-bar { 
-           width: 100%; 
-           height: 10px; 
-           background: #222; 
-           border: 1px solid #00FF41; 
-           overflow: hidden; 
-       } 
-
-       .loading-progress { 
-           height: 100%; 
-           width: 0%; 
-           background: #00FF41; 
-           animation: loading 6s forwards; 
-       } 
-
-       @keyframes loading { 
-           0% { width: 0%; } 
-           100% { width: 100%; } 
-       } 
-
-       /* Навигация */ 
-       .navigation { 
-           display: flex; 
-           justify-content: center; 
-           flex-wrap: wrap; 
-           gap: 15px; 
-           padding: 20px; 
-           background: linear-gradient(90deg, #111 0%, #1a001a 50%, #111 100%); 
-           border-bottom: 1px solid #6A0DAD; 
-           margin-bottom: 30px; 
-       } 
-
-       .nav-button { 
-           color: #00FF41; 
-           background: transparent; 
-           border: 1px solid #00FF41; 
-           padding: 12px 20px; 
-           border-radius: 3px; 
-           cursor: pointer; 
-           font-family: 'Orbitron', sans-serif; 
-           font-size: 14px; 
-           transition: all 0.3s ease; 
-           position: relative; 
-           overflow: hidden; 
-           text-transform: uppercase; 
-           letter-spacing: 1px; 
-       } 
-
-       .nav-button::before { 
-           content: ''; 
-           position: absolute; 
-           top: 0; 
-           left: -100%; 
-           width: 100%; 
-           height: 100%; 
-           background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent); 
-           transition: left 0.5s ease; 
-       } 
-
-       .nav-button:hover::before { 
-           left: 100%; 
-       } 
-
-       .nav-button:hover { 
-           transform: translateY(-2px); 
-           box-shadow: 0 5px 15px rgba(0, 255, 65, 0.3); 
-           border-color: #6A0DAD; 
-       } 
-
-       .nav-button.active { 
-           color: #000; 
-           background-color: #00FF41; 
-           box-shadow: 0 0 20px #00FF41; 
-           border-color: #00FF41; 
-       } 
-
-       /* Эффект капли */ 
-       .ripple { 
-           position: absolute; 
-           border-radius: 50%; 
-           background: rgba(0, 255, 65, 0.4); 
-           transform: scale(0); 
-           animation: ripple 0.6s linear; 
-           pointer-events: none; 
-       } 
-
-       @keyframes ripple { 
-           to { 
-               transform: scale(2.5); 
-               opacity: 0; 
-           } 
-       } 
-
-       /* Заголовки */ 
-       h1, h2, h3 { 
-           font-family: 'Zen Dots', cursive; 
-           margin-bottom: 20px; 
-           text-shadow: 0 0 5px currentColor; 
-       } 
-
-       h1 { 
-           color: #00FF41; 
-           font-size: 3rem; 
-           text-align: center; 
-           margin: 30px 0; 
-       } 
-
-       h2 { 
-           color: #6A0DAD; 
-           font-size: 2rem; 
-           border-bottom: 1px solid #6A0DAD; 
-           padding-bottom: 10px; 
-           margin-top: 40px; 
-       } 
-
-       h3 { 
-           color: #ff003c; 
-           font-size: 1.5rem; 
-           margin-top: 30px; 
-       } 
-
-       /* Секции */ 
-       .section { 
-           display: none; 
-           animation: fadeIn 1s forwards; 
-           margin-bottom: 50px; 
-       } 
-
-       @keyframes fadeIn { 
-           from { opacity: 0; transform: translateY(20px); } 
-           to { opacity: 1; transform: translateY(0); } 
-       } 
-
-       .section.active { 
-           display: block; 
-       } 
-
-       /* Mainframe */ 
-       .terminal { 
-           background: #111; 
-           border: 2px solid #00FF41; 
-           padding: 20px; 
-           font-family: monospace; 
-           margin: 30px 0; 
-           position: relative; 
-           overflow: hidden; 
-       } 
-
-       .terminal::before { 
-           content: ''; 
-           position: absolute; 
-           top: 0; 
-           left: 0; 
-           width: 100%; 
-           height: 100%; 
-           background: repeating-linear-gradient( 
-               transparent, 
-               transparent 2px, 
-               rgba(0, 255, 65, 0.05) 2px, 
-               rgba(0, 255, 65, 0.05) 4px 
-           ); 
-           pointer-events: none; 
-       } 
-
-       .terminal-header { 
-           color: #00FF41; 
-           border-bottom: 1px solid #00FF41; 
-           padding-bottom: 10px; 
-           margin-bottom: 20px; 
-           display: flex; 
-           justify-content: space-between; 
-       } 
-
-       .terminal-content { 
-           line-height: 1.8; 
-       } 
-
-       .blinking-cursor { 
-           animation: blink 1s infinite; 
-       } 
-
-       @keyframes blink { 
-           0%, 100% { opacity: 1; } 
-           50% { opacity: 0; } 
-       } 
-
-       /* Node Access */ 
-       .album-container { 
-           display: flex; 
-           flex-wrap: wrap; 
-           gap: 30px; 
-           margin: 30px 0; 
-       } 
-
-       .album { 
-           flex: 1; 
-           min-width: 300px; 
-           background: #111; 
-           border: 1px solid #6A0DAD; 
-           padding: 20px; 
-           position: relative; 
-           overflow: hidden; 
-       } 
-
-       .album::before { 
-           content: ''; 
-           position: absolute; 
-           top: 0; 
-           left: 0; 
-           width: 100%; 
-           height: 100%; 
-           background: linear-gradient(45deg, rgba(106, 13, 173, 0.1), rgba(0, 255, 65, 0.1)); 
-           z-index: -1; 
-       } 
-
-       .album-cover { 
-           width: 100%; 
-           height: 300px; 
-           background: #222; 
-           margin-bottom: 20px; 
-           display: flex; 
-           align-items: center; 
-           justify-content: center; 
-           border: 1px solid #00FF41; 
-           overflow: hidden; 
-       } 
-
-       .album-cover-placeholder { 
-           color: #00FF41; 
-           font-size: 1.5rem; 
-           text-align: center; 
-       } 
-
-       .track-list { 
-           list-style: none; 
-       } 
-
-       .track-item { 
-           padding: 10px; 
-           margin: 10px 0; 
-           background: #1a1a1a; 
-           border-left: 3px solid #ff003c; 
-           cursor: pointer; 
-           transition: all 0.3s ease; 
-       } 
-
-       .track-item:hover { 
-           background: #222; 
-           transform: translateX(5px); 
-           border-left-color: #00FF41; 
-       } 
-
-       .track-description { 
-           background: #1a1a1a; 
-           padding: 15px; 
-           margin: 10px 0; 
-           border: 1px solid #6A0DAD; 
-           display: none; 
-       } 
-
-       .listen-btn { 
-           display: inline-block; 
-           margin-top: 10px; 
-           padding: 8px 15px; 
-           background: #6A0DAD; 
-           color: #00FF41; 
-           text-decoration: none; 
-           border: 1px solid #00FF41; 
-           transition: all 0.3s ease; 
-       } 
-
-       .listen-btn:hover { 
-           background: #00FF41; 
-           color: #000; 
-       } 
-
-       /* Classified Log */ 
-       .protocols { 
-           background: #111; 
-           border: 2px solid #ff003c; 
-           padding: 20px; 
-           position: relative; 
-       } 
-
-       .classified-banner { 
-           position: absolute; 
-           top: 10px; 
-           right: 10px; 
-           background: #ff003c; 
-           color: #000; 
-           padding: 5px 10px; 
-           font-size: 12px; 
-           font-weight: bold; 
-           transform: rotate(15deg); 
-       } 
-
-       .contact-info { 
-           margin: 20px 0; 
-       } 
-
-       .social-links { 
-           display: flex; 
-           gap: 15px; 
-           margin-top: 20px; 
-           flex-wrap: wrap; 
-       } 
-
-       .social-link { 
-           color: #00FF41; 
-           text-decoration: none; 
-           border: 1px solid #6A0DAD; 
-           padding: 8px 15px; 
-           transition: all 0.3s ease; 
-       } 
-
-       .social-link:hover { 
-           background: #6A0DAD; 
-           color: #000; 
-       } 
-
-       /* System Orders */ 
-       .system-orders { 
-           background: #111; 
-           border: 2px solid #00FF41; 
-           padding: 20px; 
-           position: relative; 
-       } 
-
-       /* Футер */ 
-       footer { 
-           text-align: center; 
-           padding: 30px 20px; 
-           border-top: 2px solid #6A0DAD; 
-           font-size: 14px; 
-           color: #555; 
-           margin-top: 50px; 
-           background: linear-gradient(90deg, #111 0%, #1a001a 50%, #111 100%); 
-       } 
-
-       /* Адаптивность */ 
-       @media (max-width: 768px) { 
-           h1 { 
-               font-size: 2rem; 
-           } 
-            
-           h2 { 
-               font-size: 1.5rem; 
-           } 
-            
-           .navigation { 
-               flex-direction: column; 
-               align-items: center; 
-           } 
-            
-           .album-container { 
-               flex-direction: column; 
-           } 
-       } 
-   </style> 
-</head> 
-<body> 
-   <div class="noise"></div> 
-   <div class="scan-line"></div> 
-
-   <div id="loader"> 
-       <div class="loader-text">UNIT:SERAPHIM</div> 
-       <div class="world-map"> 
-           <!-- Протокольный текст будет добавляться динамически --> 
-           <div class="protocol-text" id="protocol-text"></div> 
-            
-           <!-- Точки городов --> 
-           <div class="city-point" style="top: 30%; left: 40%;"></div> <!-- Москва --> 
-           <div class="city-point" style="top: 28%; left: 38%;"></div> <!-- Питер --> 
-           <div class="city-point" style="top: 32%; left: 48%;"></div> <!-- Казань --> 
-           <div class="city-point" style="top: 30%; left: 52%;"></div> <!-- Екатеринбург --> 
-           <div class="city-point" style="top: 35%; left: 39%;"></div> <!-- Сочи --> 
-           <div class="city-point" style="top: 28%; left: 30%;"></div> <!-- Лондон --> 
-           <div class="city-point" style="top: 30%; left: 32%;"></div> <!-- Париж --> 
-           <div class="city-point" style="top: 35%; left: 20%;"></div> <!-- Нью-Йорк --> 
-           <div class="city-point" style="top: 35%; left: 75%;"></div> <!-- Токио --> 
-           <div class="city-point" style="top: 65%; left: 85%;"></div> <!-- Сидней --> 
-       </div> 
-        
-       <div class="loading-container"> 
-           <div class="loading-text">INITIALIZING PROTOCOL: <span id="percent">0%</span></div> 
-           <div class="loading-bar"> 
-               <div class="loading-progress"></div> 
-           </div> 
-       </div> 
-   </div> 
-
-   <div class="container" style="display: none;"> 
-       <header> 
-           <h1>UNIT:SERAPHIM</h1> 
-       </header> 
-        
-       <nav class="navigation"> 
-           <button class="nav-button active" data-section="mainframe">Mainframe</button> 
-           <button class="nav-button" data-section="node-access">Node Access</button> 
-           <button class="nav-button" data-section="classified-log">Classified Log</button> 
-           <button class="nav-button" data-section="system-orders">System Orders</button> 
-       </nav> 
-
-       <main> 
-           <!-- Mainframe --> 
-           <section id="mainframe" class="section active"> 
-               <div class="terminal"> 
-                   <div class="terminal-header"> 
-                       <span>BOOT SEQUENCE: UNIT: SERAPHIM</span> 
-                       <span>ACCESS LEVEL: OMEGA_RESTRICTED</span> 
-                   </div> 
-                   <div class="terminal-content"> 
-                       <p>> STATUS: CONTAMINATED SIGNAL DETECTED</p> 
-                       <p>> GATEWAY PROTOCOL [D.o.D.] — INITIATED</p> 
-                        
-                       <p>> THREAT INDEX: CRITICAL / UNDEFINED</p> 
-                       <p>> SUBJECT_01: ONLINE</p> 
-                       <p>> SUBJECT_02: STANDBY</p> 
-                        
-                       <p>> UNIT: SERAPHIM — AWAKENING</p> 
-                       <p>> TRANSMISSION: ENCRYPTED [///]</p> 
-                        
-                       <p>> WARNING: THIS ACCESS POINT IS NOT APPROVED</p> 
-                       <p>> CLASSIFIED INTERFACE BREACH DETECTED</p> 
-               </div> 
-           </section> 
-
-          <!-- Node Access --> 
-<section id="node-access" class="section"> 
-   <h2>NODE ACCESS</h2> 
-
-   <div class="album-container"> 
-
-       <!-- ACT I --> 
-       <div class="album"> 
-           <h3>ACT I: THE DEGREE OF DANGER</h3> 
-           <div class="album-cover"> 
-               <img src="images/Kryonelle.jpg" alt="Act I Cover" class="album-cover-img"> 
-           </div> 
-           <ul class="track-list"> 
-               <li class="track-item" data-description="Опасность восприятия. Герой ощущает, что реальность дала сбой. Это вход в портал — точка, где человеческое сознание становится уязвимым. Символ «шута»: шаг в неизвестность, первый шаг к трансформации"> 
-                   01. The Degree of Danger 
-                   <a href="https://music.yandex.ru/track/134193148?utm_source=web&utm_medium=copy_link" target="_blank" class="listen-link">Listen</a> 
-               </li> 
-               <li class="track-item" data-description="Woven World Web — не просто интернет, а сеть судеб и миров. Здесь появляется Kryonelle — маска и гид. Но за ней скрыта CHIMERA — сущность, что ждёт момента раскрыться. Герой впервые понимает: это не глюк, а структура. Система протоколов уже следит.."> 
-                   02. WWW 
-                   <a href="https://music.yandex.ru/track/134193149?utm_source=web&utm_medium=copy_link" target="_blank" class="listen-link">Listen</a> 
-               </li> 
-               <li class="track-item" data-description="Сознание ломается. Герой слышит чужие голоса, сигналы, эхо. Kryonelle открывает «скрытые протоколы» — фрагменты кода, которым человек быть не должен свидетелем. Ему открывается истина: он не случайная жертва. Он выбран. Но зачем?."> 
-                   03. Psycho 
-                   <a href="https://music.yandex.ru/track/134193150?utm_source=web&utm_medium=copy_link" target="_blank" class="listen-link">Listen</a> 
-               </li> 
-               <li class="track-item" data-description="Попытка «лечиться» химией оборачивается ещё большим падением. Лекарство ломает барьер, открывает новый портал. Герой становится проводником, «каналом». С этого момента он не просто человек — через него идёт связь с иным"> 
-                   04. C17H13ClN4 
-                   <a href="https://music.yandex.ru/track/134193151?utm_source=web&utm_medium=copy_link" target="_blank" class="listen-link">Listen</a> 
-               </li> 
-           </ul> 
-       </div> 
-
-       <!-- ACT II --> 
-       <div class="album"> 
-           <h3>ACT II: UNIT: SERAPHIM</h3> 
-           <div class="album-cover"> 
-               <img src="images/new.jpg" alt="Act II Cover" class="album-cover-img"> 
-           </div> 
-           <ul class="track-list"> 
-               <li class="track-item" data-description="Система классифицирует угрозу: Degree of Danger. Запускается протокол сдерживания. Seraphim призван — но он не спаситель. Это боевой алгоритм, рождающийся из крови, чтобы открывать и охранять врата. UNIT:SERAPHIM — отряд подавления. Люди в плащах и очках, но за ними — машина. Seraphim существует в трёх формах: как отряд (люди), как машина (алгоритм) и как символ власти (огненный ангел). Их цель — уничтожить носителя, пока сквозь него не прорвалось «то, что за сетью»"> 
-                   01. UNIT:SERAPHIM 
-                   <a href="https://pavellazarev.bandcamp.com/yum" target="_blank" class="listen-link">Listen</a> 
-               </li> 
-               <li class="track-item" data-description="Герой переносится в цифровой сектор. NODE-ALPHA — первый узел доступа. Здесь Kryonelle проявляется не как иллюзия, а как жрица ритуала. Она ведёт его глубже в систему, но её мотивы туманны. Она — маска, а за маской скрыта CHIMERA. Герой думает, что она союзник, но её ритуал работает и на него, и против него"> 
-                   02. SECTOR-02/NODE-ALPHA 
-                   <a href="https://pavellazarev.bandcamp.com/yum" target="_blank" class="listen-link">Listen</a> 
-               </li> 
-               <li class="track-item" data-description="Герой уверен, что «Архангел» — это Seraphim, тот, кто должен его защитить. Но Protocol-X открывает совсем иное: Kryonelle сбрасывает маску. Истинная сущность — CHIMERA — выходит наружу. Seraphim — отряд подавления, но он лишь инструмент. CHIMERA же — первородная метафизическая угроза, которую система пыталась скрыть любой ценой"> 
-                   03. PROTOCOL-X/ARCHANGEL 
-                   <a href="https://pavellazarev.bandcamp.com/yum" target="_blank" class="listen-link">Listen</a> 
-               </li> 
-               <li class="track-item" data-description="The climax of the album, representing the full transformation into a new form of being."> 
-                   04. ??? 
-               </li> 
-           </ul> 
-       </div> 
-
-   </div> 
-</section> 
-
-
-            <!-- Classified Log --> 
-           <section id="classified-log" class="section"> 
-               <h2>CLASSIFIED LOG</h2> 
-                
-               <div class="terminal"> 
-                   <div class="terminal-header"> 
-                       <span>HISTORY_ARCHIVE.SYS</span> 
-                       <span>ACCESS: CLASSIFIED</span> 
-                   </div> 
-                   <div class="terminal-content"> 
-                       <p>> Акт I — The Degree of Danger</p> 
-                       <p> (Инициация, первый контакт)</p> 
-                       <p>> 1. The Degree of Danger</p> 
-                       <p> Вход в портал. Это опасность восприятия, первый шаг в трансформацию. «Шут» — вход в новый мир</p> 
-                       <p>> 2. WWW</p> 
-                       <p> Он постепенно понимает, что это все врата. C.H.I.M.E.R.A. - появляется как «виртуальный гид». Она же сущность — Kryonelle</p> 
-                       <p> Kryonelle - «маска»</p> 
-                       <p> Chimera = «то, что за этой маской», первородная сущность/тьма. WWW — это «Woven World Web» (сплетённый мир), сеть не только информации, но и судеб...</p> 
-                       <p> Герой оказывается перекрёстком двух сил</p> 
-                       <p>> 3. Psycho</p> 
-                       <p> Границы сознания рушатся: он слышит голоса. Kryonelle раскрывает «скрытые протоколы»</p> 
-                       <p> Он понимает: это не случайно — его выбрали</p> 
-                       <p> Но за что?</p> 
-                       <p>> 4. C17H13ClN4</p> 
-                       <p> Лекарство не возвращает его в норму, а открывает «новую дверь»</p> 
-                       <p> Он осознаёт, что стал проводником — «каналом» для чего-то больше, чем человек</p> 
-                       <p> Этим и закончился Акт I — врата открыты, но их природа остаётся неясной</p> 
-                       <P> Он не псих, не хакер, не шаман — а выбранный</P> 
-                       <p> </p> 
-                       <P> Акт II — UNIT:SERAPHIM</P> 
-                       <p> (Пролог. "Протокол запущен")</p> 
-                       <p> Серафим — боевой алгоритм</p> 
-                       <p> Наратив запуска:</p> 
-                       <p> [PROTOCOL: DEGREE_OF_DANGER] — CLASSIFIED</p> 
-                       <p> Threat classification: ACTIVE GATEWAY DETECTED</p> 
-                       <p> Carrier designation: SUBJECT_01 // Host confirmed </p> 
-                       <p> Status: ONLINE // LINK ESTABLISHED</p> 
-                       <P> Summoning procedure: UNIT: SERAPHIM [INITIATED]</P> 
-                       <p> Standby for ARCHANGEL SEQUENCE</p> 
-                       <p>>1. UNIT:SERAPHIM</p> 
-                       <p> Cобытия первого акта были подготовкой к призыву боевой единицы.</p> 
-                       <p> В метафизическом плане Seraphim = программа, встроенная в Систему</p> 
-                       <P> Её задача: фиксировать появление каналов (как твой герой) и сбрасывать мир в “safe mode”</P> 
-                       <p> Seraphim = «огненные ангелы» (в каббале серафимы сжигают всё нечистое перед троном)</p> 
-                       <p> Это не «добро» и не «зло», а принцип — ничего лишнего не должно вырваться наружу</p> 
-                       <p> Seraphim = истребитель, но одновременно «хранитель равновесия»</p> 
-                       <p> Но у этой программы нет морали: она не понимает, что душа или сознание могут быть чем-то больше</p> 
-                       <p> Seraphim — не спаситель. Это боевой ангел в цифровой оболочке, сконструированный, чтобы открывать и защищать врата</p> 
-                       <P> Seraphim — это не спасение, а боевой алгоритм</P> 
-                       <p> Seraphim не просто включается, он рождается из крови</p> 
-                       <p> Seraphim проявляется в трёх слоях:</p> 
-                       <p> Люди (агенты-исполнители)</p> 
-                       <p> Машина (цифровая оболочка-алгоритм)</p> 
-                       <p> Cимвол (принцип очищения)</p> 
-                       <p> Seraphim становится трёхликим образом, и каждая грань отражает один и тот же принцип, но в разных формах</p> 
-                       <p> The Degree of Danger = классификация</p> 
-                       <p> В первом акте он контактирует с Kryonelle - открываются врата</p> 
-                       <p> UNIT:SERAPHIM отряд подавления</p> 
-                       <p> Это группа агентов, обученных сдерживать и ликвидировать тех, кто вошёл в контакт с Kryonelle/CHIMERA</p> 
-                       <p> Их цель: не дать ему стать порталом, потому что через него может прорваться то, что находится «за сетью»</p> 
-                       <p> Seraphim существует и как люди, и как машина</p> 
-                       <p> Люди — исполнители</p> 
-                       <p>> 2. SECTOR-02/NODE-ALPHA</p> 
-                       <p> Он переносится в цифровой сектор. NODE-ALPHA — это узел, первая точка входа</p> 
-                       <p> Там обитает Kryonelle, но теперь она уже не иллюзия </p> 
-                       <p> Она не просто объект желания/страха, а проводник ритуала</p> 
-                       <p>> 3. PROTOCOL-X / ARCHANGEL</p> 
-                       <p> Здесь начинается вторжение. Он думает, что «архангел» — это Seraphim, но на деле Protocol-X открывает CHIMERA</p> 
-                       <p> CHIMERA - метафизическая сущность, Она и есть то, что Kryonelle скрывала внутри себя</p> 
-                       <p>> END OF FILE<span class="blinking-cursor">_</span></p> 
-                   </div> 
-               </div> 
-           </section> 
-
-           <!-- System Orders --> 
-           <section id="system-orders" class="section"> 
-               <h2>SYSTEM ORDERS</h2> 
-                
-               <div class="system-orders"> 
-                   <div class="classified-banner">TOP SECRET</div> 
-                    
-                   <div class="terminal-content"> 
-                       <p>> ACCESS LEVEL: DELTA // CLEARANCE RESTRICTED</p> 
-                       <p>> ACTIVE DIRECTIVES:</p> 
-                       <p>> – АКТИВИРОВАТЬ НЕЙРОННЫЕ СЕТИ НОСИТЕЛЯ (инициация завершена)</p> 
-                       <p>> – РАЗВЕРНУТЬ ПРОТОКОЛЫ КВАНТОВОГО ЗАЩИТНОГО КОНТУРА (подготовка к проникновению)</p> 
-                       <p>> – ИНТЕГРИРОВАТЬСЯ С ГЛОБАЛЬНОЙ СЕТЬЮ СУДЕБ (точка синхронизации близка)</p> 
-                       <p>> COMMUNICATION PROTOCOLS:</p> 
-                   </div> 
-                    
-                   <div class="contact-info"> 
-                        <a href="https://t.me/UnitSeraphim" target="_blank" class="listen-link">COMMAND</a> 
-                        <p></p> 
-                        <a href="https://t.me/+olNMpcM6Q5BkZDcy" target="_blank" class="listen-link">ENCRYPTED CHANNEL</a> 
-                       <p>OPERATIONS: Archangel Deployment</p> 
-                   </div> 
-               </div> 
-           </section> 
-       </main> 
-
-       <footer> 
-           <p>UNIT:SERAPHIM © 2023 | CLASSIFIED PROJECT</p> 
-           <p>FOR AUTHORIZED PERSONNEL ONLY. UNAUTHORIZED ACCESS PROHIBITED.</p> 
-       </footer> 
-   </div> 
-
-   <script> 
-       document.addEventListener('DOMContentLoaded', function() { 
-           // Текст для построчного отображения 
-           const protocolLines = [ 
-               '"Протокол запущен"', 
-               'Серафим — боевой алгоритм', 
-               '[PROTOCOL: DEGREE_OF_DANGER] — CLASSIFIED', 
-               'Threat classification: ACTIVE GATEWAY DETECTED', 
-               'Carrier designation: SUBJECT_01 // Host confirmed', 
-               'Status: ONLINE // LINK ESTABLISHED', 
-               'Summoning procedure: UNIT: SERAPHIM [INITIATED]', 
-               'Standby for ARCHANGEL SEQUENCE' 
-           ]; 
-            
-           const protocolTextElement = document.getElementById('protocol-text'); 
-            
-           // Функция для построчного отображения текста 
-           function displayTextLineByLine() { 
-               let i = 0; 
-               const interval = setInterval(() => { 
-                   if (i < protocolLines.length) { 
-                       const lineElement = document.createElement('p'); 
-                       lineElement.className = 'protocol-line'; 
-                       lineElement.textContent = protocolLines[i]; 
-                       lineElement.style.animationDelay = `${i * 0.5}s`; 
-                       protocolTextElement.appendChild(lineElement); 
-                       i++; 
-                   } else { 
-                       clearInterval(interval); 
-                   } 
-               }, 500); 
-           } 
-            
-           // Запускаем отображение текста 
-           displayTextLineByLine(); 
-            
-           // Анимация точек на карте 
-           const cityPoints = document.querySelectorAll('.city-point'); 
-           cityPoints.forEach((point, index) => { 
-               setTimeout(() => { 
-                   point.style.opacity = '1'; 
-                   point.style.animation = `pulse 2s infinite ${index * 0.5}s`; 
-               }, index * 600); 
-           }); 
-
-           // Обновление процентов загрузки 
-           const percentElement = document.getElementById('percent'); 
-           let percent = 0; 
-           const interval = setInterval(() => { 
-               percent += 1; 
-               percentElement.textContent = `${percent}%`; 
-               if (percent >= 100) { 
-                   clearInterval(interval); 
-               } 
-           }, 60); 
-
-           // Имитация загрузки 
-           setTimeout(function() { 
-               document.getElementById('loader').style.display = 'none'; 
-               document.querySelector('.container').style.display = 'block'; 
-           }, 8000); // Увеличил время загрузки для отображения всего текста 
-            
-           // Навигация с эффектом капли 
-           const navButtons = document.querySelectorAll('.nav-button'); 
-           const sections = document.querySelectorAll('.section'); 
-            
-           navButtons.forEach(button => { 
-               button.addEventListener('click', function(e) { 
-                   // Эффект капли 
-                   const ripple = document.createElement('span'); 
-                   ripple.classList.add('ripple'); 
-                   const rect = this.getBoundingClientRect(); 
-                   const size = Math.max(rect.width, rect.height); 
-                   const x = e.clientX - rect.left - size / 2; 
-                   const y = e.clientY - rect.top - size / 2; 
-                    
-                   ripple.style.width = ripple.style.height = `${size}px`; 
-                   ripple.style.left = `${x}px`; 
-                   ripple.style.top = `${y}px`; 
-                    
-                   this.appendChild(ripple); 
-                    
-                   setTimeout(() => { 
-                       ripple.remove(); 
-                   }, 600); 
-                    
-                   // Задержка перед переключением секций 
-                   setTimeout(() => { 
-                       // Убираем активный класс у всех кнопок 
-                       navButtons.forEach(btn => btn.classList.remove('active')); 
-                        
-                       // Добавляем активный класс к текущей кнопке 
-                       this.classList.add('active'); 
-                        
-                       // Скрываем все секции 
-                       sections.forEach(section => section.classList.remove('active')); 
-                        
-                       // Показываем выбранную секцию 
-                       const sectionId = this.getAttribute('data-section'); 
-                       document.getElementById(sectionId).classList.add('active'); 
-                   }, 1000); 
-               }); 
-           }); 
-            
-           // Открытие описаний треков 
-           const trackItems = document.querySelectorAll('.track-item'); 
-            
-           trackItems.forEach(item => { 
-               item.addEventListener('click', function() { 
-                   // Создаем или находим описание 
-                   let description = this.nextElementSibling; 
-                    
-                   // Если описание уже существует, переключаем его видимость 
-                   if (description && description.classList.contains('track-description')) { 
-                       if (description.style.display === 'block') { 
-                           description.style.display = 'none'; 
-                       } else { 
-                           // Скрываем все другие описания 
-                           document.querySelectorAll('.track-description').forEach(desc => { 
-                               desc.style.display = 'none'; 
-                           }); 
-                           description.style.display = 'block'; 
-                       } 
-                   } else { 
-                       // Создаем новое описание 
-                       const newDescription = document.createElement('div'); 
-                       newDescription.className = 'track-description'; 
-                       newDescription.innerHTML = ` 
-                           <p>${this.getAttribute('data-description')}</p> 
-                           <a href="#" class="listen-btn">Access Node</a> 
-                       `; 
-                       this.parentNode.insertBefore(newDescription, this.nextSibling); 
-                       newDescription.style.display = 'block'; 
-                   } 
-               }); 
-           }); 
-       }); 
-   </script> 
-</body> 
-</html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIT:SERAPHIM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            color: #00FF41;
+            background-color: #0a0a0a;
+            overflow-x: hidden;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        /* CRT эффект */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 1000;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        /* Сканирующая линия */
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
+            z-index: 1001;
+            pointer-events: none;
+            animation: scan 4s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100vh; }
+        }
+
+        /* Шум */
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.05;
+            z-index: 1002;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Загрузочный экран */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loader-text {
+            color: #00FF41;
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-family: 'Zen Dots', cursive;
+            text-shadow: 0 0 10px #00FF41;
+        }
+
+        .world-map {
+            width: 80%;
+            max-width: 600px;
+            height: 300px;
+            position: relative;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .protocol-text {
+            color: #00FF41;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px #00FF41;
+            min-height: 180px;
+        }
+
+        .protocol-line {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInLine 0.5s forwards;
+        }
+
+        @keyframes fadeInLine {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .city-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff003c;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px #ff003c;
+            opacity: 0;
+        }
+
+        .city-point::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ff003c;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { width: 0; height: 0; opacity: 1; }
+            100% { width: 40px; height: 40px; opacity: 0; }
+        }
+
+        .loading-container {
+            width: 300px;
+            margin-top: 20px;
+        }
+
+        .loading-text {
+            color: #00FF41;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 10px;
+            background: #222;
+            border: 1px solid #00FF41;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            width: 0%;
+            background: #00FF41;
+            animation: loading 6s forwards;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        /* Навигация */
+        .navigation {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 20px;
+            background: linear-gradient(90deg, #111 0%, #1a001a 50%, #111 100%);
+            border-bottom: 1px solid #6A0DAD;
+            margin-bottom: 30px;
+        }
+
+        .nav-button {
+            color: #00FF41;
+            background: transparent;
+            border: 1px solid #00FF41;
+            padding: 12px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .nav-button:hover::before {
+            left: 100%;
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 65, 0.3);
+            border-color: #6A0DAD;
+        }
+
+        .nav-button.active {
+            color: #000;
+            background-color: #00FF41;
+            box-shadow: 0 0 20px #00FF41;
+            border-color: #00FF41;
+        }
+
+        /* Эффект капли */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(0, 255, 65, 0.4);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple {
+            to {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        /* Заголовки */
+        h1, h2, h3 {
+            font-family: 'Zen Dots', cursive;
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px currentColor;
+        }
+
+        h1 {
+            color: #00FF41;
+            font-size: 3rem;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        h2 {
+            color: #6A0DAD;
+            font-size: 2rem;
+            border-bottom: 1px solid #6A0DAD;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+
+        h3 {
+            color: #ff003c;
+            font-size: 1.5rem;
+            margin-top: 30px;
+        }
+
+        /* Секции */
+        .section {
+            display: none;
+            animation: fadeIn 1s forwards;
+            margin-bottom: 50px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Mainframe */
+        .terminal {
+            background: #111;
+            border: 2px solid #00FF41;
+            padding: 20px;
+            font-family: monospace;
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 65, 0.05) 2px,
+                rgba(0, 255, 65, 0.05) 4px
+            );
+            pointer-events: none;
+        }
+
+        .terminal-header {
+            color: #00FF41;
+            border-bottom: 1px solid #00FF41;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .terminal-content {
+            line-height: 1.8;
+        }
+
+        .blinking-cursor {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Node Access */
+        .album-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .album {
+            flex: 1;
+            min-width: 300px;
+            background: #111;
+            border: 1px solid #6A0DAD;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .album::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(106, 13, 173, 0.1), rgba(0, 255, 65, 0.1));
+            z-index: -1;
+        }
+
+        .album-cover {
+            width: 100%;
+            height: 300px;
+            background: #222;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #00FF41;
+            overflow: hidden;
+        }
+
+        .album-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .album-cover-placeholder {
+            color: #00FF41;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .track-list {
+            list-style: none;
+        }
+
+        .track-item {
+            padding: 10px;
+            margin: 10px 0;
+            background: #1a1a1a;
+            border-left: 3px solid #ff003c;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .track-item:hover {
+            background: #222;
+            transform: translateX(5px);
+            border-left-color: #00FF41;
+        }
+
+        .listen-link {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #00FF41;
+            text-decoration: none;
+            border: 1px solid #00FF41;
+            padding: 2px 8px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .listen-link:hover {
+            background: #00FF41;
+            color: #000;
+        }
+
+        .track-description {
+            background: #1a1a1a;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #6A0DAD;
+            display: none;
+        }
+
+        .listen-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: #6A0DAD;
+            color: #00FF41;
+            text-decoration: none;
+            border: 1px solid #00FF41;
+            transition: all 0.3s ease;
+        }
+
+        .listen-btn:hover {
+            background: #00FF41;
+            color: #000;
+        }
+
+        /* Classified Log */
+        .protocols {
+            background: #111;
+            border: 2px solid #ff003c;
+            padding: 20px;
+            position: relative;
+        }
+
+        .classified-banner {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff003c;
+            color: #000;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            transform: rotate(15deg);
+        }
+
+        .contact-info {
+            margin: 20px 0;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .social-link {
+            color: #00FF41;
+            text-decoration: none;
+            border: 1px solid #6A0DAD;
+            padding: 8px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: #6A0DAD;
+            color: #000;
+        }
+
+        /* System Orders */
+        .system-orders {
+            background: #111;
+            border: 2px solid #00FF41;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Футер */
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            border-top: 2px solid #6A0DAD;
+            font-size: 14px;
+            color: #555;
+            margin-top: 50px;
+            background: linear-gradient(90deg, #111 0%, #1a001a 50%, #111 100%);
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .album-container {
+                flex-direction: column;
+            }
+            
+            .track-item {
+                padding-right: 80px;
+            }
+            
+            .listen-link {
+                position: relative;
+                right: auto;
+                top: auto;
+                transform: none;
+                margin-left: 10px;
+                display: inline-block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="noise"></div>
+    <div class="scan-line"></div>
+
+    <div id="loader">
+        <div class="loader-text">UNIT:SERAPHIM</div>
+        <div class="world-map">
+            <div class="protocol-text" id="protocol-text"></div>
+            
+            <div class="city-point" style="top: 30%; left: 40%;"></div>
+            <div class="city-point" style="top: 28%; left: 38%;"></div>
+            <div class="city-point" style="top: 32%; left: 48%;"></div>
+            <div class="city-point" style="top: 30%; left: 52%;"></div>
+            <div class="city-point" style="top: 35%; left: 39%;"></div>
+            <div class="city-point" style="top: 28%; left: 30%;"></div>
+            <div class="city-point" style="top: 30%; left: 32%;"></div>
+            <div class="city-point" style="top: 35%; left: 20%;"></div>
+            <div class="city-point" style="top: 35%; left: 75%;"></div>
+            <div class="city-point" style="top: 65%; left: 85%;"></div>
+        </div>
+        
+        <div class="loading-container">
+            <div class="loading-text">INITIALIZING PROTOCOL: <span id="percent">0%</span></div>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" style="display: none;">
+        <header>
+            <h1>UNIT:SERAPHIM</h1>
+        </header>
+        
+        <nav class="navigation">
+            <button class="nav-button active" data-section="mainframe">Mainframe</button>
+            <button class="nav-button" data-section="node-access">Node Access</button>
+            <button class="nav-button" data-section="classified-log">Classified Log</button>
+            <button class="nav-button" data-section="system-orders">System Orders</button>
+        </nav>
+
+        <main>
+            <section id="mainframe" class="section active">
+                <div class="terminal">
+                    <div class="terminal-header">
+                        <span>BOOT SEQUENCE: UNIT: SERAPHIM</span>
+                        <span>ACCESS LEVEL: OMEGA_RESTRICTED</span>
+                    </div>
+                    <div class="terminal-content">
+                        <p>> STATUS: CONTAMINATED SIGNAL DETECTED</p>
+                        <p>> GATEWAY PROTOCOL [D.o.D.] — INITIATED</p>
+                        <p>> THREAT INDEX: CRITICAL / UNDEFINED</p>
+                        <p>> SUBJECT_01: ONLINE</p>
+                        <p>> SUBJECT_02: STANDBY</p>
+                        <p>> UNIT: SERAPHIM — AWAKENING</p>
+                        <p>> TRANSMISSION: ENCRYPTED [///]</p>
+                        <p>> WARNING: THIS ACCESS POINT IS NOT APPROVED</p>
+                        <p>> CLASSIFIED INTERFACE BREACH DETECTED</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="node-access" class="section">
+                <h2>NODE ACCESS</h2>
+                <div class="album-container">
+                    <div class="album">
+                        <h3>ACT I: THE DEGREE OF DANGER</h3>
+                        <div class="album-cover">
+                            <div class="album-cover-placeholder">COVER ART</div>
+                        </div>
+                        <ul class="track-list">
+                            <li class="track-item" data-description="Опасность восприятия. Герой ощущает, что реальность дала сбой. Это вход в портал — точка, где человеческое сознание становится уязвимым.">
+                                01. The Degree of Danger
+                                <a href="https://music.yandex.ru/track/134193148" target="_blank" class="listen-link">Listen</a>
+                            </li>
+                            <li class="track-item" data-description="Woven World Web — не просто интернет, а сеть судеб и миров. Здесь появляется Kryonelle — маска и гид.">
+                                02. WWW
+                                <a href="https://music.yandex.ru/track/134193149" target="_blank" class="listen-link">Listen</a>
+                            </li>
+                            <li class="track-item" data-description="Сознание ломается. Герой слышит чужие голоса, сигналы, эхо. Kryonelle открывает «скрытые протоколы».">
+                                03. Psycho
+                                <a href="https://music.yandex.ru/track/134193150" target="_blank" class="listen-link">Listen</a>
+                            </li>
+                            <li class="track-item" data-description="Попытка «лечиться» химией оборачивается ещё большим падением. Лекарство ломает барьер, открывает новый портал.">
+                                04. C17H13ClN4
+                                <a href="https://music.yandex.ru/track/134193151" target="_blank" class="listen-link">Listen</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="album">
+                        <h3>ACT II: UNIT: SERAPHIM</h3>
+                        <div class="album-cover">
+                            <div class="album-cover-placeholder">COVER ART</div>
+                        </div>
+                        <ul class="track-list">
+                            <li class="track-item" data-description="Система классифицирует угрозу: Degree of Danger. Запускается протокол сдерживания. Seraphim призван — но он не спаситель.">
+                                01. UNIT:SERAPHIM
+                                <a href="https://pavellazarev.bandcamp.com" target="_blank" class="listen-link">Listen</a>
+                            </li>
+                            <li class="track-item" data-description="Герой переносится в цифровой сектор. NODE-ALPHA — первый узел доступа. Здесь Kryonelle проявляется не как иллюзия, а как жрица ритуала.">
+                                02. SECTOR-02/NODE-ALPHA
+                                <a href="https://pavellazarev.bandcamp.com" target="_blank" class="listen-link">Listen</a>
+                            </li>
+                            <li class="track-item" data-description="Герой уверен, что «Архангел» — это Seraphim, тот, кто должен его защитить. Но Protocol-X открывает совсем иное.">
+                                03. PROTOCOL-X/ARCHANGEL
+                                <a href="https://pavellazarev.bandcamp.com" target="_blank" class="listen-link">Listen</a>
+                            </li>
+                            <li class="track-item" data-description="The climax of the album, representing the full transformation into a new form of being.">
+                                04. ???
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="classified-log" class="section">
+                <h2>CLASSIFIED LOG</h2>
+                <div class="terminal">
+                    <div class="terminal-header">
+                        <span>HISTORY_ARCHIVE.SYS</span>
+                        <span>ACCESS: CLASSIFIED</span>
+                    </div>
+                    <div class="terminal-content">
+                      <p>> Акт I — The Degree of Danger</p>
+                        <p> (Инициация, первый контакт)</p>
+                        <p>> 1. The Degree of Danger</p>
+                        <p> Вход в портал. Это опасность восприятия, первый шаг в трансформацию. «Шут» — вход в новый мир</p>
+                        <p>> 2. WWW</p>
+                        <p> Он постепенно понимает, что это все врата. C.H.I.M.E.R.A. - появляется как «виртуальный гид». Она же сущность — Kryonelle</p>
+                        <p> Kryonelle - «маска»</p>
+                        <p> Chimera = «то, что за этой маской», первородная сущность/тьма. WWW — это «Woven World Web» (сплетённый мир), сеть не только информации, но и судеб...</p>
+                        <p> Герой оказывается перекрёстком двух сил</p>
+                        <p>> 3. Psycho</p>
+                        <p> Границы сознания рушатся: он слышит голоса. Kryonelle раскрывает «скрытые протоколы»</p>
+                        <p> Он понимает: это не случайно — его выбрали</p>
+                        <p> Но за что?</p>
+                        <p>> 4. C17H13ClN4</p>
+                        <p> Лекарство не возвращает его в норму, а открывает «новую дверь»</p>
+                        <p> Он осознаёт, что стал проводником — «каналом» для чего-то больше, чем человек</p>
+                        <p> Этим и закончился Акт I — врата открыты, но их природа остаётся неясной</p>
+                        <P> Он не псих, не хакер, не шаман — а выбранный</P>
+                        <p> </p>
+                        <P> Акт II — UNIT:SERAPHIM</P>
+                        <p> (Пролог. "Протокол запущен")</p>
+                        <p> Серафим — боевой алгоритм</p>
+                        <p> Наратив запуска:</p>
+                        <p> [PROTOCOL: DEGREE_OF_DANGER] — CLASSIFIED</p>
+                        <p> Threat classification: ACTIVE GATEWAY DETECTED</p>
+                        <p> Carrier designation: SUBJECT_01 // Host confirmed </p>
+                        <p> Status: ONLINE // LINK ESTABLISHED</p>
+                        <P> Summoning procedure: UNIT: SERAPHIM [INITIATED]</P>
+                        <p> Standby for ARCHANGEL SEQUENCE</p>
+                        <p>>1. UNIT:SERAPHIM</p>
+                        <p> Cобытия первого акта были подготовкой к призыву боевой единицы.</p>
+                        <p> В метафизическом плане Seraphim = программа, встроенная в Систему</p>
+                        <P> Её задача: фиксировать появление каналов (как твой герой) и сбрасывать мир в “safe mode”</P>
+                        <p> Seraphim = «огненные ангелы» (в каббале серафимы сжигают всё нечистое перед троном)</p>
+                        <p> Это не «добро» и не «зло», а принцип — ничего лишнего не должно вырваться наружу</p>
+                        <p> Seraphim = истребитель, но одновременно «хранитель равновесия»</p>
+                        <p> Но у этой программы нет морали: она не понимает, что душа или сознание могут быть чем-то больше</p>
+                        <p> Seraphim — не спаситель. Это боевой ангел в цифровой оболочке, сконструированный, чтобы открывать и защищать врата</p>
+                        <P> Seraphim — это не спасение, а боевой алгоритм</P>
+                        <p> Seraphim не просто включается, он рождается из крови</p>
+                        <p> Seraphim проявляется в трёх слоях:</p>
+                        <p> Люди (агенты-исполнители)</p>
+                        <p> Машина (цифровая оболочка-алгоритм)</p>
+                        <p> Cимвол (принцип очищения)</p>
+                        <p> Seraphim становится трёхликим образом, и каждая грань отражает один и тот же принцип, но в разных формах</p>
+                        <p> The Degree of Danger = классификация</p>
+                        <p> В первом акте он контактирует с Kryonelle - открываются врата</p>
+                        <p> UNIT:SERAPHIM отряд подавления</p>
+                        <p> Это группа агентов, обученных сдерживать и ликвидировать тех, кто вошёл в контакт с Kryonelle/CHIMERA</p>
+                        <p> Их цель: не дать ему стать порталом, потому что через него может прорваться то, что находится «за сетью»</p>
+                        <p> Seraphim существует и как люди, и как машина</p>
+                        <p> Люди — исполнители</p>
+                        <p>> 2. SECTOR-02/NODE-ALPHA</p>
+                        <p> Он переносится в цифровой сектор. NODE-ALPHA — это узел, первая точка входа</p>
+                        <p> Там обитает Kryonelle, но теперь она уже не иллюзия </p>
+                        <p> Она не просто объект желания/страха, а проводник ритуала</p>
+                        <p>> 3. PROTOCOL-X / ARCHANGEL</p>
+                        <p> Здесь начинается вторжение. Он думает, что «архангел» — это Seraphim, но на деле Protocol-X открывает CHIMERA</p>
+                        <p> CHIMERA - метафизическая сущность, Она и есть то, что Kryonelle скрывала внутри себя</p>
+                        <p>> END OF FILE<span class="blinking-cursor">_</span></p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="system-orders" class="section">
+                <h2>SYSTEM ORDERS</h2>
+                <div class="system-orders">
+                    <div class="classified-banner">TOP SECRET</div>
+                    <div class="terminal-content">
+                        <p>> ACCESS LEVEL: DELTA // CLEARANCE RESTRICTED</p>
+                        <p>> ACTIVE DIRECTIVES:</p>
+                        <p>> – АКТИВИРОВАТЬ НЕЙРОННЫЕ СЕТИ НОСИТЕЛЯ</p>
+                        <p>> – РАЗВЕРНУТЬ ПРОТОКОЛЫ КВАНТОВОГО ЗАЩИТНОГО КОНТУРА</p>
+                        <p>> – ИНТЕГРИРОВАТЬСЯ С ГЛОБАЛЬНОЙ СЕТЬЮ СУДЕБ</p>
+                        <p>> COMMUNICATION PROTOCOLS:</p>
+                    </div>
+                    <div class="contact-info">
+                        <a href="https://t.me/UnitSeraphim" target="_blank" class="listen-btn">COMMAND</a>
+                        <a href="https://t.me/+olNMpcM6Q5BkZDcy" target="_blank" class="listen-btn">ENCRYPTED CHANNEL</a>
+                        <p>OPERATIONS: Archangel Deployment</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>UNIT:SERAPHIM © 2023 | CLASSIFIED PROJECT</p>
+            <p>FOR AUTHORIZED PERSONNEL ONLY. UNAUTHORIZED ACCESS PROHIBITED.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const protocolLines = [
+                '"Протокол запущен"',
+                'Серафим — боевой алгоритм',
+                '[PROTOCOL: DEGREE_OF_DANGER] — CLASSIFIED',
+                'Threat classification: ACTIVE GATEWAY DETECTED',
+                'Carrier designation: SUBJECT_01 // Host confirmed',
+                'Status: ONLINE // LINK ESTABLISHED',
+                'Summoning procedure: UNIT: SERAPHIM [INITIATED]',
+                'Standby for ARCHANGEL SEQUENCE'
+            ];
+            
+            const protocolTextElement = document.getElementById('protocol-text');
+            
+            function displayTextLineByLine() {
+                let i = 0;
+                const interval = setInterval(() => {
+                    if (i < protocolLines.length) {
+                        const lineElement = document.createElement('p');
+                        lineElement.className = 'protocol-line';
+                        lineElement.textContent = protocolLines[i];
+                        lineElement.style.animationDelay = `${i * 0.5}s`;
+                        protocolTextElement.appendChild(lineElement);
+                        i++;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 500);
+            }
+            
+            displayTextLineByLine();
+            
+            const cityPoints = document.querySelectorAll('.city-point');
+            cityPoints.forEach((point, index) => {
+                setTimeout(() => {
+                    point.style.opacity = '1';
+                    point.style.animation = `pulse 2s infinite ${index * 0.5}s`;
+                }, index * 600);
+            });
+
+            const percentElement = document.getElementById('percent');
+            let percent = 0;
+            const interval = setInterval(() => {
+                percent += 1;
+                percentElement.textContent = `${percent}%`;
+                if (percent >= 100) {
+                    clearInterval(interval);
+                }
+            }, 60);
+
+            setTimeout(function() {
+                document.getElementById('loader').style.display = 'none';
+                document.querySelector('.container').style.display = 'block';
+            }, 8000);
+            
+            const navButtons = document.querySelectorAll('.nav-button');
+            const sections = document.querySelectorAll('.section');
+            
+            navButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    ripple.classList.add('ripple');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = `${size}px`;
+                    ripple.style.left = `${x}px`;
+                    ripple.style.top = `${y}px`;
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                    
+                    setTimeout(() => {
+                        navButtons.forEach(btn => btn.classList.remove('active'));
+                        this.classList.add('active');
+                        sections.forEach(section => section.classList.remove('active'));
+                        const sectionId = this.getAttribute('data-section');
+                        document.getElementById(sectionId).classList.add('active');
+                    }, 1000);
+                });
+            });
+            
+            const trackItems = document.querySelectorAll('.track-item');
+            
+            trackItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    let description = this.nextElementSibling;
+                    
+                    if (description && description.classList.contains('track-description')) {
+                        if (description.style.display === 'block') {
+                            description.style.display = 'none';
+                        } else {
+                            document.querySelectorAll('.track-description').forEach(desc => {
+                                desc.style.display = 'none';
+                            });
+                            description.style.display = 'block';
+                        }
+                    } else {
+                        const newDescription = document.createElement('div');
+                        newDescription.className = 'track-description';
+                        newDescription.innerHTML = `
+                            <p>${this.getAttribute('data-description')}</p>
+                            <a href="#" class="listen-btn">Access Node</a>
+                        `;
+                        this.parentNode.insertBefore(newDescription, this.nextSibling);
+                        newDescription.style.display = 'block';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
 
